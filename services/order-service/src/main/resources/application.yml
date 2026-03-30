@@ -1,0 +1,35 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: order-service
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/orderbook}
+    username: ${DB_USERNAME:orderbook}
+    password: ${DB_PASSWORD:orderbook}
+  flyway:
+    table: flyway_schema_history_order_service
+    baseline-on-migrate: true
+    baseline-version: 0
+  jooq:
+    sql-dialect: postgres
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
+services:
+  risk: ${RISK_SERVICE_URL:http://localhost:8082}
+  matching: ${MATCHING_SERVICE_URL:http://localhost:8083}
+  ledger: ${LEDGER_SERVICE_URL:http://localhost:8084}
+  query: ${QUERY_SERVICE_URL:http://localhost:8085}
+  market-data: ${MARKET_DATA_SERVICE_URL:http://localhost:8086}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
