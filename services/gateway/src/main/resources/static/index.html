@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OrderBook Console</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<div class="page-shell">
+    <header class="hero">
+        <div class="hero-copy">
+            <p class="eyebrow">Trading Sandbox</p>
+            <h1>OrderBook Console</h1>
+            <p class="lede">
+                Place an order, inspect projected balances and positions, and watch the live market snapshot update
+                through the gateway.
+            </p>
+        </div>
+        <div class="hero-card">
+            <div class="stat">
+                <span class="label">Gateway</span>
+                <span class="value">:8080</span>
+            </div>
+            <div class="stat">
+                <span class="label">Query</span>
+                <span class="value">:8085</span>
+            </div>
+            <div class="stat">
+                <span class="label">Market Data</span>
+                <span class="value">:8086</span>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard">
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Place Order</h2>
+                <button id="seed-demo" class="ghost-button" type="button">Load Demo Values</button>
+            </div>
+            <form id="order-form" class="grid-form">
+                <label>
+                    Account ID
+                    <input id="accountId" name="accountId" value="ACC-001" required>
+                </label>
+                <label>
+                    Client Order ID
+                    <input id="clientOrderId" name="clientOrderId" required>
+                </label>
+                <label>
+                    Symbol
+                    <input id="symbol" name="symbol" value="AAPL" required>
+                </label>
+                <label>
+                    Side
+                    <select id="side" name="side">
+                        <option value="BUY">BUY</option>
+                        <option value="SELL">SELL</option>
+                    </select>
+                </label>
+                <label>
+                    Price
+                    <input id="price" name="price" type="number" step="0.01" value="100" required>
+                </label>
+                <label>
+                    Quantity
+                    <input id="quantity" name="quantity" type="number" min="1" value="1" required>
+                </label>
+                <button class="primary-button" type="submit">Submit Order</button>
+            </form>
+            <div id="order-status" class="status-card muted">No order submitted yet.</div>
+        </section>
+
+        <section class="panel">
+            <div class="panel-head">
+                <h2>Inspect State</h2>
+                <button id="refresh-all" class="ghost-button" type="button">Refresh</button>
+            </div>
+            <div class="lookup-strip">
+                <label>
+                    Order ID
+                    <input id="lookupOrderId" placeholder="Created order ID appears here">
+                </label>
+                <label>
+                    Account
+                    <input id="lookupAccountId" value="ACC-001">
+                </label>
+                <label>
+                    Symbol
+                    <input id="lookupSymbol" value="AAPL">
+                </label>
+            </div>
+            <div class="result-grid">
+                <article class="result-card">
+                    <h3>Order</h3>
+                    <pre id="order-result">Awaiting data…</pre>
+                </article>
+                <article class="result-card">
+                    <h3>Balance</h3>
+                    <pre id="balance-result">Awaiting data…</pre>
+                </article>
+                <article class="result-card">
+                    <h3>Positions</h3>
+                    <pre id="positions-result">Awaiting data…</pre>
+                </article>
+                <article class="result-card">
+                    <h3>Order Book</h3>
+                    <pre id="orderbook-result">Awaiting data…</pre>
+                </article>
+                <article class="result-card result-card-wide">
+                    <h3>Recent Trades</h3>
+                    <pre id="trades-result">Awaiting data…</pre>
+                </article>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script src="/app.js"></script>
+</body>
+</html>
