@@ -1,0 +1,59 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "graphTooltip": 0,
+  "panels": [
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+      "id": 1,
+      "targets": [
+        { "expr": "sum(rate(orderbook_order_actions_total{action=\"place\"}[5m])) by (outcome)", "legendFormat": "{{outcome}}", "refId": "A" }
+      ],
+      "title": "Order Placement Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+      "id": 2,
+      "targets": [
+        { "expr": "sum(rate(orderbook_kafka_events_consumed_total[5m])) by (service, topic)", "legendFormat": "{{service}} {{topic}}", "refId": "A" }
+      ],
+      "title": "Kafka Consumption Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "id": 3,
+      "targets": [
+        { "expr": "sum(rate(orderbook_kafka_events_published_total[5m])) by (topic)", "legendFormat": "{{topic}}", "refId": "A" }
+      ],
+      "title": "Kafka Publication Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "Prometheus",
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "id": 4,
+      "targets": [
+        { "expr": "sum(increase(orderbook_replay_events_total[1h])) by (service, eventType)", "legendFormat": "{{service}} {{eventType}}", "refId": "A" }
+      ],
+      "title": "Replay Events",
+      "type": "timeseries"
+    }
+  ],
+  "schemaVersion": 39,
+  "style": "dark",
+  "tags": ["orderbook"],
+  "templating": { "list": [] },
+  "time": { "from": "now-1h", "to": "now" },
+  "title": "OrderBook Overview",
+  "uid": "orderbook-overview",
+  "version": 1
+}

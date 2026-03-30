@@ -1,0 +1,247 @@
+name: orderbook
+
+services:
+  kafka:
+    image: confluentinc/cp-kafka:7.6.1
+    container_name: orderbook-kafka
+    hostname: kafka
+    restart: unless-stopped
+    ports:
+      - "9092:9092"
+    environment:
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,CONTROLLER://0.0.0.0:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "cub kafka-ready -b localhost:9092 1 20"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+      start_period: 20s
+
+  postgres:
+    image: postgres:16
+    container_name: orderbook-postgres
+    hostname: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: orderbook
+      POSTGRES_USER: orderbook
+      POSTGRES_PASSWORD: orderbook
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U orderbook -d orderbook"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7.2
+    container_name: orderbook-redis
+    hostname: redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  matching-engine:
+    build:
+      context: ../..
+      dockerfile: infra/docker/app.Dockerfile
+      args:
+        SERVICE_PATH: services/matching-engine
+    container_name: orderbook-matching-engine
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+
+  risk-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/app.Dockerfile
+      args:
+        SERVICE_PATH: services/risk-service
+    container_name: orderbook-risk-service
+    restart: unless-stopped
+    ports:
+      - "8082:8082"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  ledger-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/app.Dockerfile
+      args:
+        SERVICE_PATH: services/ledger-service
+    container_name: orderbook-ledger-service
+    restart: unless-stopped
+    ports:
+      - "8084:8084"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/orderbook
+      DB_USERNAME: orderbook
+      DB_PASSWORD: orderbook
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  query-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/app.Dockerfile
+      args:
+        SERVICE_PATH: services/query-service
+    container_name: orderbook-query-service
+    restart: unless-stopped
+    ports:
+      - "8085:8085"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/orderbook
+      DB_USERNAME: orderbook
+      DB_PASSWORD: orderbook
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  market-data-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/app.Dockerfile
+      args:
+        SERVICE_PATH: services/market-data-service
+    container_name: orderbook-market-data-service
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/orderbook
+      DB_USERNAME: orderbook
+      DB_PASSWORD: orderbook
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: ../..
+      dockerfile: infra/docker/app.Dockerfile
+      args:
+        SERVICE_PATH: services/order-service
+    container_name: orderbook-order-service
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/orderbook
+      DB_USERNAME: orderbook
+      DB_PASSWORD: orderbook
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      RISK_SERVICE_URL: http://risk-service:8082
+      MATCHING_SERVICE_URL: http://matching-engine:8083
+      LEDGER_SERVICE_URL: http://ledger-service:8084
+      QUERY_SERVICE_URL: http://query-service:8085
+      MARKET_DATA_SERVICE_URL: http://market-data-service:8086
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+      risk-service:
+        condition: service_started
+      matching-engine:
+        condition: service_started
+      ledger-service:
+        condition: service_started
+      query-service:
+        condition: service_started
+      market-data-service:
+        condition: service_started
+
+  gateway:
+    build:
+      context: ../..
+      dockerfile: infra/docker/app.Dockerfile
+      args:
+        SERVICE_PATH: services/gateway
+    container_name: orderbook-gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ORDER_SERVICE_URL: http://order-service:8081
+      QUERY_SERVICE_URL: http://query-service:8085
+      MARKET_DATA_SERVICE_URL: http://market-data-service:8086
+    depends_on:
+      order-service:
+        condition: service_started
+      query-service:
+        condition: service_started
+      market-data-service:
+        condition: service_started
+
+  prometheus:
+    image: prom/prometheus:v2.52.0
+    container_name: orderbook-prometheus
+    hostname: prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+
+  grafana:
+    image: grafana/grafana:11.0.0
+    container_name: orderbook-grafana
+    hostname: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+
+volumes:
+  kafka_data:
+  postgres_data:
+  grafana_data:
