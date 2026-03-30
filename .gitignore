@@ -1,0 +1,43 @@
+# === Build outputs ===
+build/
+out/
+.gradle/
+.kotlin/
+
+# === Java / Kotlin ===
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+
+# === IDE ===
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# === OS ===
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# === Environment & secrets ===
+.env
+.env.*
+!.env.example
+
+# === Claude Code ===
+.claude/
+
+# === Logs ===
+*.log
