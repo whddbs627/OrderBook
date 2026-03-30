@@ -37,7 +37,6 @@ class WebSocketConfig {
             order = -1
         }
 
-
     @Bean
     fun handlerAdapter() = WebSocketHandlerAdapter()
 }

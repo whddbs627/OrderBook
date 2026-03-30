@@ -3,8 +3,8 @@ package com.orderbook.gateway.web
 import com.orderbook.common.events.AmendOrderRequest
 import com.orderbook.common.events.PlaceOrderRequest
 import com.orderbook.gateway.GatewayTargets
-import org.slf4j.LoggerFactory
 import io.netty.channel.ChannelOption
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
